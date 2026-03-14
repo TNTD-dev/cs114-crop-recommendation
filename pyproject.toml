@@ -1,0 +1,16 @@
+[project]
+name = "crop-recommendation"
+version = "0.1.0"
+description = "Hệ thống gợi ý loại cây trồng dựa trên thổ nhưỡng và khí hậu"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "pandas",
+    "numpy",
+    "matplotlib",
+    "seaborn",
+    "scikit-learn",
+    "jupyter",
+    "joblib",
+    "ipykernel",
+]

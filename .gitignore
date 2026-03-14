@@ -1,0 +1,18 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# Jupyter checkpoints
+.ipynb_checkpoints/
+
+# Saved models & processed data (không commit file lớn)
+saved_models/*.pkl
+saved_models/*.joblib
+data/processed/*.csv
