@@ -1,0 +1,17 @@
+# Frontend
+node_modules/
+src/frontend/.local
+src/frontend/dist/
+.vite/
+
+# Environment (secrets)
+.env
+.env.local
+.env.*.local
+
+# IDE & OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+*.log

@@ -16,3 +16,22 @@ wheels/
 saved_models/*.pkl
 saved_models/*.joblib
 data/processed/*.csv
+
+# Frontend
+node_modules/
+.pnpm-store/
+src/frontend/dist/
+src/frontend/.local
+.vite/
+
+# Environment (secrets)
+.env
+.env.local
+.env.*.local
+
+# IDE & OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+*.log

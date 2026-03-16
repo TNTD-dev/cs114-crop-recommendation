@@ -1,4 +1,4 @@
-### TÊN ĐỀ TÀI: HỆ THỐNG HỖ TRỢ RA QUYẾT ĐỊNH GỢI Ý LOẠI CÂY TRỒNG DỰA TRÊN CÁC YẾU TỐ THỔ NHƯỠNG VÀ KHÍ HẬU
+# HỆ THỐNG HỖ TRỢ RA QUYẾT ĐỊNH GỢI Ý LOẠI CÂY TRỒNG DỰA TRÊN CÁC YẾU TỐ THỔ NHƯỠNG VÀ KHÍ HẬU
 
 #### 1. Lý do chọn đề tài (Bối cảnh & Vấn đề thực tế)
 Nông nghiệp là ngành mũi nhọn của Việt Nam, tuy nhiên, việc lựa chọn loại cây trồng vẫn còn mang tính chủ quan và dựa nhiều vào kinh nghiệm truyền thống. Nhiều nông dân gặp thất bại do trồng sai loại cây trên vùng đất không phù hợp (ví dụ: trồng cây cần khô hạn ở vùng đất ngập úng, hoặc cây ưa chua trên đất kiềm). Điều này dẫn đến lãng phí nguồn lực, thời gian và gây thiệt hại kinh tế.
@@ -44,6 +44,8 @@ Hoàn thiện một mô hình có độ chính xác (Accuracy) trên tập test 
 
 #### 7. Hướng dẫn cài đặt & chạy
 
+**Python (ML)**
+
 ```bash
 # Yêu cầu: Python 3.12+, uv (https://docs.astral.sh/uv/getting-started/installation/)
 
@@ -60,5 +62,27 @@ uv sync
 # 3. Kích hoạt môi trường ảo
 source .venv/bin/activate   # Linux/macOS
 # hoặc: .venv\Scripts\activate  # Windows
-
 ```
+
+**Frontend (CropSmart)**
+
+```bash
+# Yêu cầu: Node.js 18+, pnpm (https://pnpm.io/installation)
+
+# 1. Vào thư mục frontend
+cd src/frontend
+
+# 2. Cài dependencies (lần đầu)
+pnpm install
+
+# 3. Chạy dev server
+pnpm run dev
+```
+
+Mở trình duyệt tại **http://localhost:5173/** để xem ứng dụng.
+
+| Lệnh | Mô tả |
+|------|-------|
+| `pnpm run dev` | Chạy dev server (hot reload) |
+| `pnpm run build` | Build production |
+| `pnpm run typecheck` | Kiểm tra TypeScript |
