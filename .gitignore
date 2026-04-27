@@ -12,10 +12,8 @@ wheels/
 # Jupyter checkpoints
 .ipynb_checkpoints/
 
-# Saved models & processed data (không commit file lớn)
-saved_models/*.pkl
-saved_models/*.joblib
-data/processed/*.csv
+
+
 
 # Frontend
 node_modules/
