@@ -1,65 +1,96 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
-  BarChart, Bar, AreaChart, Area, ScatterChart, Scatter,
+  BarChart, Bar, AreaChart, Area, ScatterChart, Scatter, ComposedChart, Line,
   XAxis, YAxis, Tooltip, ResponsiveContainer, Cell
 } from "recharts";
 import {
-  Leaf, Zap, BarChart2, Users, ChevronDown, Droplets,
+  Leaf, Zap, BarChart2, Users, Droplets,
   Thermometer, Wind, FlaskConical, Sprout, ArrowRight,
-  CheckCircle2, Star, TrendingUp, Beaker
+  CheckCircle2, Star, TrendingUp, Beaker, Trophy, Cloud
 } from "lucide-react";
 
 const npkData = [
-  { crop: "Rice", N: 120, P: 55, K: 40 },
-  { crop: "Maize", N: 150, P: 70, K: 80 },
-  { crop: "Coffee", N: 100, P: 40, K: 100 },
-  { crop: "Peanut", N: 25, P: 60, K: 50 },
-  { crop: "Cassava", N: 60, P: 30, K: 90 },
+  { crop: "Rice", N: 79.9, P: 47.6, K: 39.9 },
+  { crop: "Maize", N: 77.8, P: 48.4, K: 19.8 },
+  { crop: "Coffee", N: 101.2, P: 28.7, K: 29.9 },
+  { crop: "Apple", N: 20.8, P: 134.2, K: 199.9 },
+  { crop: "Cotton", N: 117.8, P: 46.2, K: 19.6 }
 ];
 
-const rainfallData = [
-  { month: "Jan", rainfall: 40, yield: 2.1 },
-  { month: "Feb", rainfall: 55, yield: 2.4 },
-  { month: "Mar", rainfall: 90, yield: 3.1 },
-  { month: "Apr", rainfall: 140, yield: 4.2 },
-  { month: "May", rainfall: 180, yield: 5.0 },
-  { month: "Jun", rainfall: 220, yield: 5.8 },
-  { month: "Jul", rainfall: 200, yield: 5.5 },
-  { month: "Aug", rainfall: 170, yield: 5.0 },
-  { month: "Sep", rainfall: 130, yield: 4.3 },
-  { month: "Oct", rainfall: 80, yield: 3.2 },
-  { month: "Nov", rainfall: 50, yield: 2.5 },
-  { month: "Dec", rainfall: 35, yield: 2.0 },
+const rainTempData = [
+  { crop: "Rice", rainfall: 236.2, temp: 23.7 },
+  { crop: "Maize", rainfall: 84.8, temp: 22.4 },
+  { crop: "Coffee", rainfall: 158.1, temp: 25.5 },
+  { crop: "Apple", rainfall: 112.7, temp: 22.6 },
+  { crop: "Cotton", rainfall: 80.4, temp: 24.0 }
 ];
 
 const clusterData = [
-  { temp: 28, humidity: 82, crop: "Rice" },
-  { temp: 29, humidity: 78, crop: "Rice" },
-  { temp: 27, humidity: 85, crop: "Rice" },
-  { temp: 26, humidity: 80, crop: "Rice" },
-  { temp: 22, humidity: 55, crop: "Wheat" },
-  { temp: 21, humidity: 50, crop: "Wheat" },
-  { temp: 23, humidity: 58, crop: "Wheat" },
-  { temp: 32, humidity: 65, crop: "Maize" },
-  { temp: 31, humidity: 68, crop: "Maize" },
-  { temp: 33, humidity: 62, crop: "Maize" },
-  { temp: 35, humidity: 40, crop: "Mango" },
-  { temp: 36, humidity: 38, crop: "Mango" },
-  { temp: 34, humidity: 42, crop: "Mango" },
-  { temp: 20, humidity: 70, crop: "Apple" },
-  { temp: 19, humidity: 72, crop: "Apple" },
-  { temp: 18, humidity: 68, crop: "Apple" },
+  { temp: 26.0, humidity: 85.0, crop: "Rice" },
+  { temp: 22.0, humidity: 81.9, crop: "Rice" },
+  { temp: 25.0, humidity: 83.9, crop: "Rice" },
+  { temp: 24.9, humidity: 80.5, crop: "Rice" },
+  { temp: 26.3, humidity: 82.4, crop: "Rice" },
+  { temp: 25.1, humidity: 56.0, crop: "Maize" },
+  { temp: 18.4, humidity: 64.2, crop: "Maize" },
+  { temp: 19.2, humidity: 68.3, crop: "Maize" },
+  { temp: 20.6, humidity: 69.0, crop: "Maize" },
+  { temp: 22.2, humidity: 72.9, crop: "Maize" },
+  { temp: 24.6, humidity: 56.5, crop: "Coffee" },
+  { temp: 23.6, humidity: 50.6, crop: "Coffee" },
+  { temp: 25.6, humidity: 62.7, crop: "Coffee" },
+  { temp: 27.1, humidity: 63.6, crop: "Coffee" },
+  { temp: 26.2, humidity: 62.3, crop: "Coffee" },
+  { temp: 23.8, humidity: 93.7, crop: "Apple" },
+  { temp: 23.1, humidity: 92.4, crop: "Apple" },
+  { temp: 22.5, humidity: 92.5, crop: "Apple" },
+  { temp: 24.0, humidity: 91.6, crop: "Apple" },
+  { temp: 22.4, humidity: 90.8, crop: "Apple" },
+  { temp: 24.7, humidity: 77.7, crop: "Cotton" },
+  { temp: 25.3, humidity: 75.7, crop: "Cotton" },
+  { temp: 24.2, humidity: 76.7, crop: "Cotton" },
+  { temp: 22.6, humidity: 77.3, crop: "Cotton" },
+  { temp: 24.9, humidity: 76.3, crop: "Cotton" }
 ];
 
 const clusterColors: Record<string, string> = {
   "Rice": "#4CAF50",
-  "Wheat": "#82c341",
   "Maize": "#f59e0b",
-  "Mango": "#f97316",
-  "Apple": "#06b6d4",
+  "Coffee": "#78350f",
+  "Apple": "#ef4444",
+  "Cotton": "#0ea5e9",
 };
 
-const ML_MODELS = ["Random Forest", "SVM", "KNN", "Decision Tree"];
+const ALL_MODELS = [
+  { key: "naive_bayes", name: "Naive Bayes" },
+  { key: "knn", name: "KNN" },
+  { key: "logistic_regression", name: "Logistic Regression" },
+  { key: "random_forest", name: "Random Forest" },
+  { key: "svm", name: "SVM" },
+];
+
+const CROP_EMOJI: Record<string, string> = {
+  rice: "🌾", maize: "🌽", chickpea: "🫘", kidneybeans: "🫘",
+  pigeonpeas: "🌿", mothbeans: "🌿", mungbean: "🌿", blackgram: "🌿",
+  lentil: "🫘", pomegranate: "🍎", banana: "🍌", mango: "🥭",
+  grapes: "🍇", watermelon: "🍉", muskmelon: "🍈", apple: "🍎",
+  orange: "🍊", papaya: "🍑", coconut: "🥥", cotton: "🪴",
+  jute: "🌿", coffee: "☕",
+};
+
+type ModelResult = {
+  model_key: string;
+  model_name: string;
+  crop: string;
+  confidence: number;
+  probabilities: Record<string, number>;
+};
+
+type PredictResponse = {
+  results: ModelResult[];
+  consensus: string | null;
+  best_model: string | null;
+};
 
 const TEAM_MEMBERS = [
   { name: "Alex Nguyen", role: "Lead Data Scientist", initials: "AN" },
@@ -71,32 +102,7 @@ const TEAM_MEMBERS = [
   { name: "Kevin Dang", role: "UX Designer", initials: "KD" },
 ];
 
-const CROP_RESULTS: Record<string, { name: string; emoji: string; confidence: number; reason: string }> = {
-  "Random Forest": {
-    name: "Rice (Oryza sativa)",
-    emoji: "🌾",
-    confidence: 96,
-    reason: "Based on high humidity (82%), adequate rainfall (200mm), and mild temperature (25°C), Random Forest predicts Rice as the optimal choice with a well-suited soil pH level."
-  },
-  "SVM": {
-    name: "Maize (Zea mays)",
-    emoji: "🌽",
-    confidence: 91,
-    reason: "SVM analysis of high Nitrogen content (90 mg/kg) and elevated Potassium alongside warm temperature reveals ideal growing conditions for Maize."
-  },
-  "KNN": {
-    name: "Coffee (Coffea arabica)",
-    emoji: "☕",
-    confidence: 87,
-    reason: "KNN found the 5 most similar soil samples suggest this profile suits Coffee, particularly with a mildly acidic pH (6.2) and consistent rainfall distribution."
-  },
-  "Decision Tree": {
-    name: "Groundnut (Arachis hypogaea)",
-    emoji: "🥜",
-    confidence: 89,
-    reason: "Decision Tree analysis shows that Phosphorus content (55 mg/kg) and well-drained soil conditions create the perfect environment for Groundnut cultivation."
-  }
-};
+
 
 function CircularProgress({ value, size = 120 }: { value: number; size?: number }) {
   const radius = (size - 20) / 2;
@@ -121,26 +127,179 @@ function CircularProgress({ value, size = 120 }: { value: number; size?: number 
   );
 }
 
+
+function AnimatedHeroCard() {
+  const [data, setData] = useState({
+    crop: "Rice (Oryza sativa)",
+    emoji: "🌾",
+    suitability: 99,
+    n: 90, p: 55, k: 40,
+    temp: 25, hum: 82, rain: 200
+  });
+
+  useEffect(() => {
+    const crops = [
+      { c: "Rice (Oryza sativa)", e: "🌾" },
+      { c: "Maize (Zea mays)", e: "🌽" },
+      { c: "Coffee (Coffea arabica)", e: "☕" },
+      { c: "Banana (Musa)", e: "🍌" },
+      { c: "Cotton (Gossypium)", e: "🪴" },
+      { c: "Apple (Malus)", e: "🍎" }
+    ];
+    let tick = 0;
+    
+    const interval = setInterval(() => {
+      tick++;
+      if (tick % 10 === 0) {
+         const randomCrop = crops[Math.floor(Math.random() * crops.length)];
+         setData({
+           crop: randomCrop.c,
+           emoji: randomCrop.e,
+           suitability: 85 + Math.floor(Math.random() * 14),
+           n: 60 + Math.floor(Math.random() * 60),
+           p: 30 + Math.floor(Math.random() * 40),
+           k: 20 + Math.floor(Math.random() * 40),
+           temp: 20 + Math.floor(Math.random() * 10),
+           hum: 60 + Math.floor(Math.random() * 30),
+           rain: 100 + Math.floor(Math.random() * 150)
+         });
+      } else {
+         setData(prev => ({
+           ...prev,
+           n: Math.max(0, prev.n + (Math.random() > 0.5 ? 2 : -2)),
+           p: Math.max(0, prev.p + (Math.random() > 0.5 ? 2 : -2)),
+           k: Math.max(0, prev.k + (Math.random() > 0.5 ? 2 : -2)),
+           temp: Math.max(0, prev.temp + (Math.random() > 0.5 ? 1 : -1)),
+           hum: Math.max(0, Math.min(100, prev.hum + (Math.random() > 0.5 ? 1 : -1))),
+           rain: Math.max(0, prev.rain + (Math.random() > 0.5 ? 2 : -2)),
+           suitability: prev.suitability >= 99 ? 98 : Math.max(80, prev.suitability + (Math.random() > 0.5 ? 1 : -1))
+         }));
+      }
+    }, 400);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div className="relative w-full max-w-sm">
+      <div className="bg-white rounded-3xl shadow-2xl p-8 border border-stone-100 transition-all duration-500">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <p className="text-xs font-semibold text-stone-400 uppercase tracking-widest">
+              Analysis Result
+            </p>
+            <h3 className="text-lg font-bold font-serif text-emerald-950 mt-1 transition-all">
+              <span className="inline-block mr-2">{data.emoji}</span> 
+              {data.crop}
+            </h3>
+          </div>
+          <div className="bg-green-50 rounded-2xl p-2 animate-pulse">
+            <TrendingUp className="w-5 h-5 text-green-600" />
+          </div>
+        </div>
+
+        <div className="flex items-center justify-center mb-6">
+          <CircularProgress value={data.suitability} size={130} />
+        </div>
+
+        <div className="space-y-3">
+          <p className="text-xs font-semibold text-stone-400 uppercase tracking-widest mb-3">Real-time Metrics</p>
+          {[
+            { label: "Nitrogen (N)", value: data.n, max: 150, color: "#4CAF50" },
+            { label: "Phosphorus (P)", value: data.p, max: 150, color: "#82c341" },
+            { label: "Potassium (K)", value: data.k, max: 150, color: "#f59e0b" },
+          ].map((metric) => (
+            <div key={metric.label}>
+              <div className="flex justify-between text-xs mb-1">
+                <span className="text-stone-600 font-medium">{metric.label}</span>
+                <span className="text-stone-500 font-mono font-medium">{metric.value} mg/kg</span>
+              </div>
+              <div className="w-full bg-stone-100 rounded-full h-2 overflow-hidden">
+                <div className="h-2 rounded-full transition-all duration-[150ms] ease-linear" style={{ width: `${Math.min(100, (metric.value / metric.max) * 100)}%`, backgroundColor: metric.color }} />
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-5 pt-5 border-t border-stone-100 grid grid-cols-3 gap-3">
+          {[
+            { icon: Thermometer, label: "Temp", value: `${data.temp}°C` },
+            { icon: Droplets, label: "Humidity", value: `${data.hum}%` },
+            { icon: Wind, label: "Rainfall", value: `${data.rain}mm` },
+          ].map((item) => (
+            <div key={item.label} className="flex flex-col items-center gap-1 bg-stone-50 rounded-xl p-2 transition-all">
+              <item.icon className="w-4 h-4 text-green-600" strokeWidth={1.5} />
+              <span className="text-xs font-semibold text-emerald-900 font-mono">{item.value}</span>
+              <span className="text-[10px] text-stone-400">{item.label}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="absolute -top-4 -right-4 bg-green-600 text-white rounded-2xl px-4 py-2 shadow-lg">
+        <div className="flex items-center gap-1.5">
+          <Star className="w-3.5 h-3.5 fill-white" />
+          <span className="text-sm font-bold">~99% Accuracy</span>
+        </div>
+      </div>
+
+      <div className="absolute -bottom-4 -left-4 bg-white border border-stone-100 rounded-2xl px-4 py-3 shadow-lg">
+        <div className="flex items-center gap-2">
+          <CheckCircle2 className="w-4 h-4 text-green-600" />
+          <span className="text-xs font-semibold text-emerald-900">Random Forest Model</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function Home() {
-  const [selectedModel, setSelectedModel] = useState("Random Forest");
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [selectedModels, setSelectedModels] = useState<string[]>(ALL_MODELS.map(m => m.key));
   const [formValues, setFormValues] = useState({
     nitrogen: 90, phosphorus: 55, potassium: 40,
     temperature: 25, humidity: 82, ph: 6.5, rainfall: 200,
   });
-  const [predicted, setPredicted] = useState(false);
+  const [predictResult, setPredictResult] = useState<PredictResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [apiError, setApiError] = useState<string | null>(null);
 
-  const handlePredict = () => {
-    setIsLoading(true);
-    setTimeout(() => { setIsLoading(false); setPredicted(true); }, 1200);
+  useEffect(() => {}, []);
+
+  const toggleModel = (key: string) => {
+    setSelectedModels(prev =>
+      prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]
+    );
+    setPredictResult(null);
   };
 
-  const currentResult = CROP_RESULTS[selectedModel];
+  const handlePredict = async () => {
+    if (selectedModels.length === 0) return;
+    setIsLoading(true);
+    setApiError(null);
+    try {
+      const res = await fetch("http://localhost:8000/api/predict", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          N: formValues.nitrogen, P: formValues.phosphorus, K: formValues.potassium,
+          temperature: formValues.temperature, humidity: formValues.humidity,
+          ph: formValues.ph, rainfall: formValues.rainfall,
+          models: selectedModels,
+        }),
+      });
+      if (!res.ok) throw new Error("API error");
+      const data: PredictResponse = await res.json();
+      setPredictResult(data);
+    } catch {
+      setApiError("Không kết nối được backend. Chạy: cd src/backend && uvicorn main:app --reload");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleSliderChange = (key: string, value: number) => {
     setFormValues(prev => ({ ...prev, [key]: value }));
-    setPredicted(false);
+    setPredictResult(null);
   };
 
   return (
@@ -220,8 +379,8 @@ export default function Home() {
 
             <div className="flex items-center gap-6 pt-2">
               {[
-                { label: "Crops Analyzed", value: "22+" },
-                { label: "Accuracy Rate", value: "96%" },
+                { label: "Crops Analyzed", value: "22" },
+                { label: "Accuracy Rate", value: "~99%" },
                 { label: "Farmers Served", value: "5K+" },
               ].map((stat) => (
                 <div key={stat.label}>
@@ -234,70 +393,7 @@ export default function Home() {
 
           {/* Right: Floating Dashboard Card */}
           <div className="flex justify-center lg:justify-end">
-            <div className="relative w-full max-w-sm">
-              <div className="bg-white rounded-3xl shadow-2xl p-8 border border-stone-100">
-                <div className="flex items-center justify-between mb-6">
-                  <div>
-                    <p className="text-xs font-semibold text-stone-400 uppercase tracking-widest">Analysis Result</p>
-                    <h3 className="text-lg font-bold font-serif text-emerald-950 mt-1">🌾 Rice (Oryza sativa)</h3>
-                  </div>
-                  <div className="bg-green-50 rounded-2xl p-2">
-                    <TrendingUp className="w-5 h-5 text-green-600" />
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-center mb-6">
-                  <CircularProgress value={75} size={130} />
-                </div>
-
-                <div className="space-y-3">
-                  <p className="text-xs font-semibold text-stone-400 uppercase tracking-widest mb-3">Soil Metrics</p>
-                  {[
-                    { label: "Nitrogen (N)", value: 90, max: 150, color: "#4CAF50" },
-                    { label: "Phosphorus (P)", value: 55, max: 150, color: "#82c341" },
-                    { label: "Potassium (K)", value: 40, max: 150, color: "#f59e0b" },
-                  ].map((metric) => (
-                    <div key={metric.label}>
-                      <div className="flex justify-between text-xs mb-1">
-                        <span className="text-stone-600 font-medium">{metric.label}</span>
-                        <span className="text-stone-500">{metric.value} mg/kg</span>
-                      </div>
-                      <div className="w-full bg-stone-100 rounded-full h-2">
-                        <div className="h-2 rounded-full" style={{ width: `${(metric.value / metric.max) * 100}%`, backgroundColor: metric.color }} />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="mt-5 pt-5 border-t border-stone-100 grid grid-cols-3 gap-3">
-                  {[
-                    { icon: Thermometer, label: "Temperature", value: "25°C" },
-                    { icon: Droplets, label: "Humidity", value: "82%" },
-                    { icon: Wind, label: "Rainfall", value: "200mm" },
-                  ].map((item) => (
-                    <div key={item.label} className="flex flex-col items-center gap-1 bg-stone-50 rounded-xl p-2">
-                      <item.icon className="w-4 h-4 text-green-600" strokeWidth={1.5} />
-                      <span className="text-xs font-semibold text-emerald-900">{item.value}</span>
-                      <span className="text-[10px] text-stone-400">{item.label}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="absolute -top-4 -right-4 bg-green-600 text-white rounded-2xl px-4 py-2 shadow-lg">
-                <div className="flex items-center gap-1.5">
-                  <Star className="w-3.5 h-3.5 fill-white" />
-                  <span className="text-sm font-bold">96% Accuracy</span>
-                </div>
-              </div>
-
-              <div className="absolute -bottom-4 -left-4 bg-white border border-stone-100 rounded-2xl px-4 py-3 shadow-lg">
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-green-600" />
-                  <span className="text-xs font-semibold text-emerald-900">Random Forest Model</span>
-                </div>
-              </div>
-            </div>
+            <AnimatedHeroCard />
           </div>
         </div>
 
@@ -312,14 +408,14 @@ export default function Home() {
             },
             {
               icon: BarChart2,
-              title: "4 ML Models",
-              desc: "Random Forest, SVM, KNN, and Decision Tree work together to deliver the highest-confidence predictions.",
+              title: "5 ML Models",
+              desc: "Naive Bayes, KNN, Logistic Regression, Random Forest, and SVM work together to deliver the highest-confidence predictions.",
               color: "bg-amber-50 text-amber-600",
             },
             {
               icon: Leaf,
-              title: "22+ Crop Types",
-              desc: "The system identifies and recommends over 22 crop varieties best suited to your local conditions.",
+              title: "22 Crop Types",
+              desc: "The system identifies and recommends 22 crop varieties best suited to your local conditions.",
               color: "bg-teal-50 text-teal-600",
             },
           ].map((feat) => (
@@ -379,37 +475,28 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Card 2: Area Chart – Rainfall vs Yield */}
+            {/* Card 2: ComposedChart – Rainfall vs Temp */}
             <div className="bg-[#F9F9F4] rounded-3xl p-8 border border-stone-100">
               <div className="mb-6">
                 <div className="flex items-center gap-2 mb-1">
                   <Droplets className="w-4 h-4 text-blue-500" strokeWidth={1.5} />
-                  <span className="text-xs font-semibold text-stone-400 uppercase tracking-widest">Climate & Yield</span>
+                  <span className="text-xs font-semibold text-stone-400 uppercase tracking-widest">Climate Overview</span>
                 </div>
-                <h3 className="font-serif text-lg font-bold text-emerald-950">Rainfall vs. Crop Yield</h3>
-                <p className="text-xs text-stone-400 mt-1">Monthly distribution over the year</p>
+                <h3 className="font-serif text-lg font-bold text-emerald-950">Rainfall vs. Temperature</h3>
+                <p className="text-xs text-stone-400 mt-1">Average climate needs by crop</p>
               </div>
               <ResponsiveContainer width="100%" height={220}>
-                <AreaChart data={rainfallData}>
-                  <defs>
-                    <linearGradient id="rainfallGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#4CAF50" stopOpacity={0.2} />
-                      <stop offset="95%" stopColor="#4CAF50" stopOpacity={0} />
-                    </linearGradient>
-                    <linearGradient id="yieldGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.2} />
-                      <stop offset="95%" stopColor="#f59e0b" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <XAxis dataKey="month" tick={{ fontSize: 11, fill: "#78716c" }} axisLine={false} tickLine={false} />
-                  <YAxis hide />
+                <ComposedChart data={rainTempData}>
+                  <XAxis dataKey="crop" tick={{ fontSize: 11, fill: "#78716c" }} axisLine={false} tickLine={false} />
+                  <YAxis yAxisId="left" hide />
+                  <YAxis yAxisId="right" orientation="right" hide />
                   <Tooltip contentStyle={{ borderRadius: "12px", border: "none", boxShadow: "0 8px 30px rgba(0,0,0,0.12)", fontSize: 12 }} />
-                  <Area type="monotone" dataKey="rainfall" name="Rainfall (mm)" stroke="#4CAF50" fill="url(#rainfallGrad)" strokeWidth={2.5} dot={false} />
-                  <Area type="monotone" dataKey="yield" name="Yield (t/ha)" stroke="#f59e0b" fill="url(#yieldGrad)" strokeWidth={2.5} dot={false} />
-                </AreaChart>
+                  <Bar yAxisId="left" dataKey="rainfall" name="Rainfall (mm)" fill="#0ea5e9" radius={[4, 4, 0, 0]} barSize={20} />
+                  <Line yAxisId="right" type="monotone" dataKey="temp" name="Temp (°C)" stroke="#ef4444" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} />
+                </ComposedChart>
               </ResponsiveContainer>
               <div className="flex items-center gap-4 mt-4">
-                {[{ color: "#4CAF50", label: "Rainfall" }, { color: "#f59e0b", label: "Yield" }].map(l => (
+                {[{ color: "#0ea5e9", label: "Rainfall (mm)" }, { color: "#ef4444", label: "Temperature (°C)" }].map(l => (
                   <div key={l.label} className="flex items-center gap-1.5">
                     <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: l.color }} />
                     <span className="text-xs text-stone-500">{l.label}</span>
@@ -454,7 +541,6 @@ export default function Home() {
           </div>
         </div>
       </section>
-
       {/* ============ ML PREDICTION WORKSPACE ============ */}
       <section id="predict" className="py-24 px-6 bg-[#F9F9F4]">
         <div className="max-w-7xl mx-auto">
@@ -465,200 +551,258 @@ export default function Home() {
             </div>
             <h2 className="font-serif text-4xl font-bold text-emerald-950 mb-4">Crop Prediction Engine</h2>
             <p className="text-stone-500 max-w-xl mx-auto text-lg">
-              Enter your soil and climate parameters, select a Machine Learning model, and receive an accurate crop recommendation instantly.
+              Enter your soil parameters, select <strong>multiple models</strong> and compare predictions side by side.
             </p>
           </div>
 
-          <div className="grid lg:grid-cols-2 gap-8 items-start">
+          <div className="grid lg:grid-cols-5 gap-8 items-stretch">
             {/* Left: Input Form */}
-            <div className="bg-white rounded-3xl p-8 shadow-sm border border-stone-100">
+            <div className="lg:col-span-2 bg-white rounded-3xl p-8 shadow-sm border border-stone-100 flex flex-col">
               <h3 className="font-serif text-lg font-bold text-emerald-950 mb-6">Input Parameters</h3>
 
-              {/* Model Selector */}
+              {/* Multi-Model Selector */}
               <div className="mb-8">
-                <label className="block text-sm font-semibold text-stone-700 mb-2">Machine Learning Model</label>
-                <div className="relative">
-                  <button
-                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                    className="w-full flex items-center justify-between bg-[#F9F9F4] border border-stone-200 rounded-2xl px-4 py-3.5 text-sm font-medium text-emerald-900 hover:border-green-400 focus:outline-none focus:ring-2 focus:ring-green-200 transition-all"
-                  >
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full bg-green-500" />
-                      {selectedModel}
-                    </div>
-                    <ChevronDown className={`w-4 h-4 text-stone-400 transition-transform ${isDropdownOpen ? "rotate-180" : ""}`} />
-                  </button>
-                  {isDropdownOpen && (
-                    <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-stone-200 rounded-2xl shadow-xl z-10 overflow-hidden">
-                      {ML_MODELS.map((model) => (
-                        <button
-                          key={model}
-                          onClick={() => { setSelectedModel(model); setIsDropdownOpen(false); setPredicted(false); }}
-                          className={`w-full text-left px-4 py-3 text-sm font-medium transition-colors hover:bg-green-50 flex items-center gap-2 ${model === selectedModel ? "text-green-700 bg-green-50" : "text-stone-700"}`}
-                        >
-                          <div className={`w-2 h-2 rounded-full ${model === selectedModel ? "bg-green-500" : "bg-stone-300"}`} />
-                          {model}
-                        </button>
-                      ))}
-                    </div>
-                  )}
+                <div className="flex items-center justify-between mb-3">
+                  <label className="text-sm font-semibold text-stone-700">Select Models to Compare</label>
+                  <span className="text-xs text-green-600 font-medium">{selectedModels.length}/{ALL_MODELS.length} selected</span>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {ALL_MODELS.map((m) => {
+                    const checked = selectedModels.includes(m.key);
+                    return (
+                      <button key={m.key} onClick={() => toggleModel(m.key)}
+                        className={`flex items-center gap-1.5 px-3.5 py-2 rounded-full border text-xs font-bold transition-all shadow-sm ${
+                          checked 
+                            ? "bg-green-600 border-green-600 text-white hover:bg-green-700 hover:border-green-700" 
+                            : "bg-white border-stone-200 text-stone-600 hover:border-green-400 hover:bg-green-50 hover:text-green-700"
+                        }`}>
+                        {checked && <CheckCircle2 className="w-3.5 h-3.5" strokeWidth={2.5} />}
+                        {m.name}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
-              {/* Sliders */}
-              <div className="space-y-5">
-                {[
-                  { key: "nitrogen", label: "Nitrogen (N)", unit: "mg/kg", min: 0, max: 200, icon: FlaskConical },
-                  { key: "phosphorus", label: "Phosphorus (P)", unit: "mg/kg", min: 0, max: 200, icon: FlaskConical },
-                  { key: "potassium", label: "Potassium (K)", unit: "mg/kg", min: 0, max: 200, icon: FlaskConical },
-                  { key: "temperature", label: "Temperature", unit: "°C", min: 0, max: 50, icon: Thermometer },
-                  { key: "humidity", label: "Humidity", unit: "%", min: 0, max: 100, icon: Droplets },
-                  { key: "ph", label: "Soil pH", unit: "", min: 0, max: 14, icon: Beaker },
-                  { key: "rainfall", label: "Rainfall", unit: "mm", min: 0, max: 500, icon: Wind },
-                ].map((input) => (
-                  <div key={input.key}>
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <input.icon className="w-3.5 h-3.5 text-green-600" strokeWidth={1.5} />
-                        <label className="text-sm font-medium text-stone-700">{input.label}</label>
-                      </div>
-                      <div className="flex items-center gap-1 bg-green-50 rounded-lg px-3 py-1">
-                        <span className="text-sm font-bold font-serif text-green-700">
-                          {formValues[input.key as keyof typeof formValues]}
-                        </span>
-                        <span className="text-xs text-green-500">{input.unit}</span>
-                      </div>
-                    </div>
-                    <input
-                      type="range"
-                      min={input.min}
-                      max={input.max}
-                      step={input.key === "ph" ? 0.1 : 1}
-                      value={formValues[input.key as keyof typeof formValues]}
-                      onChange={(e) => handleSliderChange(input.key, parseFloat(e.target.value))}
-                      className="w-full h-2 rounded-full appearance-none cursor-pointer"
-                      style={{
-                        background: `linear-gradient(to right, #4CAF50 0%, #4CAF50 ${((formValues[input.key as keyof typeof formValues] - input.min) / (input.max - input.min)) * 100}%, #e5e7eb ${((formValues[input.key as keyof typeof formValues] - input.min) / (input.max - input.min)) * 100}%, #e5e7eb 100%)`
-                      }}
-                    />
+              {/* Sliders grouped by category */}
+              <div className="space-y-6">
+                
+                {/* Soil Chemistry Group */}
+                <div className="bg-stone-50/50 rounded-2xl p-5 border border-stone-100 shadow-sm">
+                  <div className="flex items-center gap-2 mb-5">
+                    <FlaskConical className="w-4 h-4 text-amber-600" />
+                    <h4 className="text-[11px] font-bold text-stone-500 uppercase tracking-widest">Soil Chemistry</h4>
                   </div>
-                ))}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
+                    {[
+                      { key: "nitrogen", label: "Nitrogen (N)", unit: "mg/kg", min: 0, max: 200, color: "#4CAF50" },
+                      { key: "phosphorus", label: "Phosphorus (P)", unit: "mg/kg", min: 0, max: 200, color: "#82c341" },
+                      { key: "potassium", label: "Potassium (K)", unit: "mg/kg", min: 0, max: 200, color: "#f59e0b" },
+                      { key: "ph", label: "Soil pH", unit: "", min: 0, max: 14, color: "#9333ea" },
+                    ].map((input) => (
+                      <div key={input.key}>
+                        <div className="flex items-center justify-between mb-2">
+                          <label className="text-xs font-semibold text-stone-600">{input.label}</label>
+                          <div className="flex items-center gap-1 bg-white rounded shadow-sm border border-stone-200 px-2 py-0.5 focus-within:ring-2 focus-within:ring-green-100 focus-within:border-green-400 transition-all">
+                            <input 
+                              type="number" 
+                              min={input.min} 
+                              max={input.max} 
+                              step={input.key === "ph" ? 0.1 : 1}
+                              value={formValues[input.key as keyof typeof formValues]}
+                              onChange={(e) => handleSliderChange(input.key, e.target.value === "" ? 0 : parseFloat(e.target.value))}
+                              className="w-12 text-right text-xs font-bold font-serif text-emerald-900 bg-transparent outline-none p-0 border-none focus:ring-0 [&::-webkit-inner-spin-button]:appearance-none"
+                            />
+                            <span className="text-[10px] text-stone-400 font-medium">{input.unit}</span>
+                          </div>
+                        </div>
+                        <input type="range" min={input.min} max={input.max}
+                          step={input.key === "ph" ? 0.1 : 1}
+                          value={formValues[input.key as keyof typeof formValues]}
+                          onChange={(e) => handleSliderChange(input.key, parseFloat(e.target.value))}
+                          className="w-full h-1.5 rounded-full appearance-none cursor-pointer"
+                          style={{ background: `linear-gradient(to right, ${input.color} 0%, ${input.color} ${((formValues[input.key as keyof typeof formValues] - input.min) / (input.max - input.min)) * 100}%, #e5e7eb ${((formValues[input.key as keyof typeof formValues] - input.min) / (input.max - input.min)) * 100}%, #e5e7eb 100%)` }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Climate Group */}
+                <div className="bg-stone-50/50 rounded-2xl p-5 border border-stone-100 shadow-sm">
+                  <div className="flex items-center gap-2 mb-5">
+                    <Cloud className="w-4 h-4 text-blue-500" />
+                    <h4 className="text-[11px] font-bold text-stone-500 uppercase tracking-widest">Climate Conditions</h4>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
+                    {[
+                      { key: "temperature", label: "Temperature", unit: "°C", min: 0, max: 50, color: "#ef4444" },
+                      { key: "humidity", label: "Humidity", unit: "%", min: 0, max: 100, color: "#3b82f6" },
+                      { key: "rainfall", label: "Rainfall", unit: "mm", min: 0, max: 500, color: "#06b6d4" },
+                    ].map((input) => (
+                      <div key={input.key}>
+                        <div className="flex items-center justify-between mb-2">
+                          <label className="text-xs font-semibold text-stone-600">{input.label}</label>
+                          <div className="flex items-center gap-1 bg-white rounded shadow-sm border border-stone-200 px-2 py-0.5 focus-within:ring-2 focus-within:ring-blue-100 focus-within:border-blue-400 transition-all">
+                            <input 
+                              type="number" 
+                              min={input.min} 
+                              max={input.max} 
+                              step={1}
+                              value={formValues[input.key as keyof typeof formValues]}
+                              onChange={(e) => handleSliderChange(input.key, e.target.value === "" ? 0 : parseFloat(e.target.value))}
+                              className="w-12 text-right text-xs font-bold font-serif text-emerald-900 bg-transparent outline-none p-0 border-none focus:ring-0 [&::-webkit-inner-spin-button]:appearance-none"
+                            />
+                            <span className="text-[10px] text-stone-400 font-medium">{input.unit}</span>
+                          </div>
+                        </div>
+                        <input type="range" min={input.min} max={input.max}
+                          step={1}
+                          value={formValues[input.key as keyof typeof formValues]}
+                          onChange={(e) => handleSliderChange(input.key, parseFloat(e.target.value))}
+                          className="w-full h-1.5 rounded-full appearance-none cursor-pointer"
+                          style={{ background: `linear-gradient(to right, ${input.color} 0%, ${input.color} ${((formValues[input.key as keyof typeof formValues] - input.min) / (input.max - input.min)) * 100}%, #e5e7eb ${((formValues[input.key as keyof typeof formValues] - input.min) / (input.max - input.min)) * 100}%, #e5e7eb 100%)` }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
 
-              <button
-                onClick={handlePredict}
-                disabled={isLoading}
-                className="w-full mt-8 bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white font-bold py-4 rounded-2xl transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 text-base"
-              >
+              <button onClick={handlePredict} disabled={isLoading || selectedModels.length === 0}
+                className="w-full mt-auto bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white font-bold py-4 rounded-2xl transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 text-base">
                 {isLoading ? (
-                  <>
-                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    Analyzing...
-                  </>
+                  <><div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />Analyzing...</>
                 ) : (
-                  <>
-                    <Sprout className="w-5 h-5" />
-                    Predict Crop Type
-                  </>
+                  <><Sprout className="w-5 h-5" />Compare {selectedModels.length} Model{selectedModels.length > 1 ? "s" : ""}</>
                 )}
               </button>
             </div>
 
-            {/* Right: Result Display */}
-            <div className="relative">
-              <div
-                className="bg-white rounded-3xl p-8 shadow-sm border border-stone-100 overflow-hidden"
-                style={{ background: predicted ? "linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%)" : "white" }}
-              >
-                <div className="absolute top-0 right-0 w-48 h-48 bg-green-50 rounded-full -translate-y-24 translate-x-24 opacity-60" />
-                <div className="absolute bottom-0 left-0 w-32 h-32 bg-emerald-50 rounded-full translate-y-16 -translate-x-16 opacity-60" />
-
-                <div className="relative z-10">
-                  <div className="flex items-center justify-between mb-8">
-                    <h3 className="font-serif text-lg font-bold text-emerald-950">Prediction Result</h3>
-                    <div className="flex items-center gap-2 bg-green-50 rounded-xl px-3 py-1.5">
-                      <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                      <span className="text-xs font-semibold text-green-700">{selectedModel}</span>
+            {/* Right: Results */}
+            <div className="lg:col-span-3 space-y-4 flex flex-col h-full">
+              {apiError && (
+                <div className="bg-red-50 border border-red-200 rounded-2xl p-4 text-sm text-red-700">⚠️ {apiError}</div>
+              )}
+              {!predictResult && !apiError && (
+                <div className="bg-white rounded-3xl p-12 shadow-sm border border-stone-100 flex flex-col items-center justify-center text-center h-full min-h-[500px] relative overflow-hidden">
+                  <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-green-50/50 via-white to-white opacity-80 pointer-events-none"></div>
+                  
+                  {/* Decorative AI rings */}
+                  <div className="relative w-40 h-40 mb-10 flex items-center justify-center">
+                    <div className="absolute inset-0 border-[3px] border-green-50 rounded-full animate-[spin_10s_linear_infinite]"></div>
+                    <div className="absolute inset-4 border-[2px] border-dashed border-emerald-100 rounded-full animate-[spin_15s_linear_infinite_reverse]"></div>
+                    <div className="absolute inset-8 border border-stone-100 rounded-full"></div>
+                    <div className="w-16 h-16 bg-gradient-to-tr from-green-600 to-emerald-400 rounded-2xl shadow-xl shadow-green-200/50 flex items-center justify-center transform rotate-3">
+                      <Sprout className="w-8 h-8 text-white drop-shadow-md" strokeWidth={2} />
                     </div>
                   </div>
 
-                  {!predicted ? (
-                    <div className="flex flex-col items-center justify-center py-20 text-center">
-                      <div className="w-24 h-24 bg-stone-100 rounded-full flex items-center justify-center mb-6">
-                        <Sprout className="w-10 h-10 text-stone-300" strokeWidth={1} />
-                      </div>
-                      <p className="text-stone-400 font-medium">Enter your parameters and press</p>
-                      <p className="text-stone-400">"Predict Crop Type" to see results</p>
+                  <h3 className="font-serif text-2xl font-bold text-emerald-950 mb-3 relative z-10">Awaiting Data</h3>
+                  <p className="text-stone-500 max-w-sm mb-10 relative z-10 text-sm">
+                    Input your soil metrics and climate data to let our multi-model AI engine determine the most suitable crop for your land.
+                  </p>
+
+                  <div className="grid grid-cols-3 gap-4 w-full max-w-md relative z-10">
+                    <div className="bg-stone-50 rounded-2xl p-4 flex flex-col items-center gap-2 border border-stone-100">
+                      <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold font-serif text-sm">1</div>
+                      <span className="text-[10px] font-semibold text-stone-500 uppercase tracking-wider text-center">Set<br/>Metrics</span>
                     </div>
-                  ) : (
-                    <div className="space-y-6">
-                      <div className="text-center py-6">
-                        <div className="text-7xl mb-4">{currentResult.emoji}</div>
-                        <h2 className="font-serif text-3xl font-bold text-emerald-950 mb-2">{currentResult.name}</h2>
-                        <div className="flex items-center justify-center gap-2">
-                          <div className="flex items-center gap-1.5 bg-green-100 border border-green-200 rounded-full px-4 py-2">
-                            <CheckCircle2 className="w-4 h-4 text-green-600" />
-                            <span className="text-sm font-bold text-green-700">
-                              Confidence: {currentResult.confidence}%
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div>
-                        <div className="flex justify-between text-xs text-stone-500 mb-2">
-                          <span>Suitability score</span>
-                          <span className="font-semibold text-green-600">{currentResult.confidence}%</span>
-                        </div>
-                        <div className="w-full bg-stone-100 rounded-full h-3">
-                          <div className="h-3 rounded-full bg-gradient-to-r from-green-400 to-green-600" style={{ width: `${currentResult.confidence}%`, transition: "width 1s ease" }} />
-                        </div>
-                      </div>
-
-                      <div className="bg-stone-50 rounded-2xl p-5 border border-stone-100">
-                        <p className="text-sm font-semibold text-stone-600 mb-2 flex items-center gap-2">
-                          <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
-                          Why This Recommendation
-                        </p>
-                        <p className="text-sm text-stone-500 leading-relaxed">{currentResult.reason}</p>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-3">
-                        {[
-                          { label: "N", value: `${formValues.nitrogen} mg/kg` },
-                          { label: "P", value: `${formValues.phosphorus} mg/kg` },
-                          { label: "K", value: `${formValues.potassium} mg/kg` },
-                          { label: "Temperature", value: `${formValues.temperature}°C` },
-                          { label: "Humidity", value: `${formValues.humidity}%` },
-                          { label: "pH", value: formValues.ph.toFixed(1) },
-                        ].map((item) => (
-                          <div key={item.label} className="flex items-center justify-between bg-white rounded-xl px-4 py-2.5 border border-stone-100">
-                            <span className="text-xs text-stone-500">{item.label}</span>
-                            <span className="text-xs font-semibold font-serif text-emerald-900">{item.value}</span>
-                          </div>
-                        ))}
-                      </div>
+                    <div className="bg-stone-50 rounded-2xl p-4 flex flex-col items-center gap-2 border border-stone-100">
+                      <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center text-amber-600 font-bold font-serif text-sm">2</div>
+                      <span className="text-[10px] font-semibold text-stone-500 uppercase tracking-wider text-center">Choose<br/>Models</span>
                     </div>
-                  )}
+                    <div className="bg-stone-50 rounded-2xl p-4 flex flex-col items-center gap-2 border border-stone-100">
+                      <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-600 font-bold font-serif text-sm">3</div>
+                      <span className="text-[10px] font-semibold text-stone-500 uppercase tracking-wider text-center">Compare<br/>Results</span>
+                    </div>
+                  </div>
                 </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4 mt-4">
-                {[
-                  { title: "Harvest Period", value: "90–120 days", icon: "🌿" },
-                  { title: "Expected Yield", value: "4–6 t/ha", icon: "📊" },
-                ].map((card) => (
-                  <div key={card.title} className="bg-white rounded-2xl p-5 border border-stone-100 shadow-sm">
-                    <div className="text-2xl mb-2">{card.icon}</div>
-                    <div className="text-xs text-stone-400 mb-1">{card.title}</div>
-                    <div className="font-serif text-base font-bold text-emerald-900">{card.value}</div>
+              )}
+              {predictResult?.consensus && (
+                <div className="bg-gradient-to-r from-emerald-800 to-green-700 rounded-3xl p-6 text-white shadow-xl relative overflow-hidden mb-6">
+                  <div className="absolute -right-6 -bottom-6 opacity-10">
+                    <Trophy className="w-48 h-48" />
                   </div>
-                ))}
+                  <div className="relative z-10 flex items-center gap-6">
+                    <div className="text-6xl bg-white/10 w-24 h-24 rounded-2xl flex items-center justify-center backdrop-blur-sm border border-white/20 shadow-inner">
+                      {CROP_EMOJI[predictResult.consensus] ?? "🌱"}
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
+                        <p className="text-xs font-semibold uppercase tracking-widest text-green-200">Final Recommendation</p>
+                      </div>
+                      <p className="text-4xl font-bold font-serif capitalize text-white drop-shadow-sm mb-2">{predictResult.consensus}</p>
+                      <div className="inline-flex items-center gap-1.5 bg-black/20 rounded-full px-3 py-1 border border-white/10">
+                        <Users className="w-3.5 h-3.5 text-green-200" />
+                        <p className="text-xs font-medium text-green-100">
+                          Agreed by <strong className="text-white">{predictResult.results.filter(r => r.crop === predictResult.consensus).length} out of {predictResult.results.length}</strong> models
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {predictResult?.results.map((r) => {
+                  const isBest = r.model_key === predictResult.best_model;
+                  const confPct = Math.round(r.confidence * 100);
+                  const alternatives = Object.entries(r.probabilities)
+                    .filter(([c]) => c !== r.crop)
+                    .slice(0, 2);
+
+                  return (
+                    <div key={r.model_key} className={`bg-white rounded-2xl p-5 border shadow-sm flex flex-col justify-between transition-all ${isBest ? "border-green-400 shadow-green-100 ring-1 ring-green-400" : "border-stone-100"}`}>
+                      <div>
+                        <div className="flex items-start justify-between mb-4">
+                          <div className="flex items-center gap-3">
+                            <div className="text-2xl bg-stone-50 w-10 h-10 rounded-xl flex items-center justify-center border border-stone-100 shadow-sm">{CROP_EMOJI[r.crop] ?? "🌱"}</div>
+                            <div>
+                              <div className="font-serif font-bold text-emerald-950 capitalize leading-tight mb-0.5">{r.crop}</div>
+                              <div className="text-xs text-stone-500 font-medium flex items-center gap-1.5">
+                                {r.model_name}
+                                {isBest && <span className="text-[9px] font-bold text-green-700 bg-green-100 rounded text-center px-1.5 py-0.5 uppercase tracking-wider">Best</span>}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="text-right flex flex-col items-end">
+                            <div className="text-lg font-bold font-serif text-green-700 leading-tight">{confPct}%</div>
+                          </div>
+                        </div>
+
+                        <div className="w-full bg-stone-100 rounded-full h-1.5 mb-4 overflow-hidden">
+                          <div className="h-1.5 rounded-full bg-gradient-to-r from-green-400 to-green-600" style={{ width: `${confPct}%`, transition: "width 0.8s ease" }} />
+                        </div>
+                      </div>
+
+                      {alternatives.length > 0 && (
+                        <div className="bg-stone-50 rounded-xl p-3 space-y-2 border border-stone-100/50">
+                          <p className="text-[10px] uppercase tracking-wider text-stone-400 font-bold">Alternatives</p>
+                          {alternatives.map(([crop, prob]) => (
+                            <div key={crop} className="flex items-center justify-between text-[11px]">
+                              <span className="text-stone-600 capitalize font-medium">{crop}</span>
+                              <div className="flex items-center gap-2 w-1/2">
+                                <div className="flex-1 bg-stone-200 rounded-full h-1 overflow-hidden">
+                                  <div className="h-1 rounded-full bg-stone-400" style={{ width: `${Math.round(prob * 100)}%` }} />
+                                </div>
+                                <span className="text-stone-400 w-6 text-right font-mono">{Math.round(prob * 100)}%</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>
         </div>
       </section>
+
+      
 
       {/* ============ TEAM SECTION ============ */}
       <section id="team" className="py-24 px-6 bg-white">

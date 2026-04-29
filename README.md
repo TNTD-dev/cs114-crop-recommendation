@@ -64,6 +64,22 @@ source .venv/bin/activate   # Linux/macOS
 # hoặc: .venv\Scripts\activate  # Windows
 ```
 
+**Backend API (FastAPI)**
+
+```bash
+# 1. Đảm bảo bạn đang ở thư mục gốc của dự án (Project/) và đã kích hoạt môi trường ảo (.venv)
+source .venv/bin/activate
+
+# 2. Cài đặt thư viện API (nếu chưa có)
+uv add fastapi uvicorn pydantic
+
+# 3. Chạy Backend Server
+uvicorn main:app --app-dir src/backend --reload --port 8000
+```
+API sẽ chạy tại **http://localhost:8000** và tài liệu Swagger UI sẽ có tại **http://localhost:8000/docs**
+
+---
+
 **Frontend (CropSmart)**
 
 ```bash
