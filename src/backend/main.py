@@ -3,7 +3,7 @@ CropSmart Backend — FastAPI application
 """
 import os
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Response
 from fastapi.middleware.cors import CORSMiddleware
 
 from api.predict import router as predict_router
@@ -53,6 +53,11 @@ app.include_router(models_router, prefix="/api")
 @app.get("/healthz")
 def healthz():
     return {"status": "ok", "models_loaded": len(model_loader.models)}
+
+
+@app.head("/healthz", include_in_schema=False)
+def healthz_head():
+    return Response(status_code=200)
 
 
 @app.get("/")

@@ -25,7 +25,7 @@ Mục tiêu là huấn luyện 5 thuật toán cơ bản bằng thư viện (đ�
 Cả hai thành viên sẽ tự code lại thuật toán học máy từ đầu (bằng NumPy/Pandas) mà không dùng class mô hình có sẵn của scikit-learn. Cấu trúc class from scratch cần có hàm `fit(X, y)` và `predict(X)`. Sau khi code xong, tiến hành train/predict và so sánh với baseline thư viện trong phần 1.
 
 ### 🔴 Thành Viên 1
-**File Notebook:** `notebooks/04_model_scratch_nb_knn_lr.ipynb`
+**File Notebook:** `notebooks/04_model_scratch_nb_knn_lr.ipynb` (Nhật Hoàng)
 
 **Nhiệm vụ (Code from scratch):**
 1. **Naive Bayes (Gaussian Naive Bayes)**
@@ -39,7 +39,7 @@ Cả hai thành viên sẽ tự code lại thuật toán học máy từ đầu 
 - Tính ra bảng so sánh kết quả của model from scratch vs model thư viện tương ứng. (Gợi ý: Dùng `pd.read_csv('../data/processed/baseline_results.csv')` để load nhanh kết quả thư viện).
 
 ### 🔵 Thành Viên 2
-**File Notebook:** `notebooks/05_model_scratch_rf_svm.ipynb`
+**File Notebook:** `notebooks/05_model_scratch_rf_svm.ipynb` (Dũng)
 
 **Nhiệm vụ (Code from scratch):**
 1. **Random Forest** (Cần code Decision Tree trước, sau đó xây dựng tập hợp Forest)
@@ -53,7 +53,7 @@ Cả hai thành viên sẽ tự code lại thuật toán học máy từ đầu 
 
 ## 3. Giai Đoạn 3: Đánh Giá Tổng Hợp, Tuning & Retrain (Cả Nhóm)
 
-**File Notebook:** `notebooks/06_evaluation_and_tuning.ipynb`
+**File Notebook:** `notebooks/06_evaluation_and_tuning.ipynb` (Nhật Hoàng)
 
 **Nhiệm vụ:**
 1. **Tổng hợp:** Gộp tất cả kết quả của 10 mô hình (5 Library + 5 Scratch) thành một bảng DataFrame duy nhất để so sánh toàn diện về hiệu năng (Accuracy, F1-Score) và thời gian chạy.
