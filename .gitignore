@@ -33,3 +33,4 @@ src/frontend/.local
 .DS_Store
 Thumbs.db
 *.log
+.codex

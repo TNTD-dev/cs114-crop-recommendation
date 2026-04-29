@@ -92,6 +92,8 @@ type PredictResponse = {
   best_model: string | null;
 };
 
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000").replace(/\/$/, "");
+
 const TEAM_MEMBERS = [
   { name: "Alex Nguyen", role: "Lead Data Scientist", initials: "AN" },
   { name: "Sarah Tran", role: "ML Engineer", initials: "ST" },
@@ -277,7 +279,7 @@ export default function Home() {
     setIsLoading(true);
     setApiError(null);
     try {
-      const res = await fetch("http://localhost:8000/api/predict", {
+      const res = await fetch(`${API_BASE_URL}/api/predict`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -291,7 +293,7 @@ export default function Home() {
       const data: PredictResponse = await res.json();
       setPredictResult(data);
     } catch {
-      setApiError("Không kết nối được backend. Chạy: cd src/backend && uvicorn main:app --reload");
+      setApiError(`Không kết nối được backend tại ${API_BASE_URL}. Kiểm tra API server hoặc biến VITE_API_BASE_URL.`);
     } finally {
       setIsLoading(false);
     }
