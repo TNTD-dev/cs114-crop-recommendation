@@ -95,13 +95,13 @@ type PredictResponse = {
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000").replace(/\/$/, "");
 
 const TEAM_MEMBERS = [
-  { name: "Alex Nguyen", role: "Lead Data Scientist", initials: "AN" },
-  { name: "Sarah Tran", role: "ML Engineer", initials: "ST" },
-  { name: "Michael Le", role: "Backend Developer", initials: "ML" },
-  { name: "Emily Pham", role: "Frontend Developer", initials: "EP" },
-  { name: "David Hoang", role: "Agricultural Expert", initials: "DH" },
-  { name: "Lisa Vu", role: "Data Analyst", initials: "LV" },
-  { name: "Kevin Dang", role: "UX Designer", initials: "KD" },
+  { name: "Trần Nguyễn Tiến Đức", role: "23520322", initials: "TĐ" },
+  { name: "Nguyễn Quang Dũng", role: "23520335", initials: "QD" },
+  { name: "Đoàn Thái Hoàng", role: "23520514", initials: "ĐH" },
+  { name: "Ngô Lê Nhật Hoàng", role: "23520526", initials: "NH" },
+  { name: "Vũ Huy Hoàng", role: "23520547", initials: "VH" },
+  { name: "Đào Vũ Hưng", role: "23520554", initials: "DH" },
+  { name: "Võ Thành Hưng", role: "23520584", initials: "TH" },
 ];
 
 
