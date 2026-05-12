@@ -39,7 +39,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Load tất cả models khi startup
+# Load best model khi startup
 @app.on_event("startup")
 async def startup_event():
     model_loader.load_all()

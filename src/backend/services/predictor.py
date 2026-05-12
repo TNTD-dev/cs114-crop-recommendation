@@ -76,16 +76,17 @@ def predict_with_models(
         model = model_loader.models.get(key)
         if model is None:
             continue
+        model_input = X if hasattr(model, "feature_names_in_") else X.to_numpy()
 
         # Dự đoán nhãn
-        pred_label_idx = int(model.predict(X)[0])
+        pred_label_idx = int(model.predict(model_input)[0])
         pred_crop = label_encoder.inverse_transform([pred_label_idx])[0] if label_encoder else str(pred_label_idx)
 
         # Lấy xác suất nếu model hỗ trợ
         probabilities: dict[str, float] = {}
         confidence: float = 1.0
         if hasattr(model, "predict_proba"):
-            proba = model.predict_proba(X)[0]  # shape: (n_classes,)
+            proba = model.predict_proba(model_input)[0]  # shape: (n_classes,)
             confidence = float(proba[pred_label_idx])
             # Top 5 crops by probability
             top_indices = np.argsort(proba)[::-1][:5]

@@ -1,7 +1,6 @@
 """
-Model Loader — Load và cache tất cả ML models từ saved_models/
+Model Loader — Load và cache best model từ saved_models/
 """
-import os
 import sys
 import joblib
 from pathlib import Path
@@ -27,14 +26,8 @@ for _mod_name in _mod_names:
 # Đường dẫn đến thư mục saved_models (tính từ gốc project)
 MODELS_DIR = Path(__file__).resolve().parents[3] / "saved_models"
 
-# Mapping tên file (không có _baseline.pkl) → tên hiển thị đẹp
-MODEL_DISPLAY_NAMES = {
-    "naive_bayes": "Naive Bayes",
-    "knn": "KNN",
-    "logistic_regression": "Logistic Regression",
-    "random_forest": "Random Forest",
-    "svm": "SVM",
-}
+BEST_MODEL_KEY = "best_model"
+BEST_MODEL_DISPLAY_NAME = "Best Model"
 
 
 class ModelLoader:
@@ -47,7 +40,10 @@ class ModelLoader:
         self.available: list[dict] = []  # danh sách metadata trả cho frontend
 
     def load_all(self):
-        """Load preprocessor, label encoder và tất cả model file."""
+        """Load preprocessor, label encoder và best_model.pkl."""
+        self.models.clear()
+        self.available.clear()
+
         # Load preprocessor
         preprocessor_path = MODELS_DIR / "preprocessor.pkl"
         if preprocessor_path.exists():
@@ -64,15 +60,14 @@ class ModelLoader:
         else:
             print(f"  ⚠️  Không tìm thấy label_encoder.pkl")
 
-        # Load từng model baseline
-        for key, display_name in MODEL_DISPLAY_NAMES.items():
-            pkl_path = MODELS_DIR / f"{key}_baseline.pkl"
-            if pkl_path.exists():
-                self.models[key] = joblib.load(pkl_path)
-                self.available.append({"key": key, "name": display_name})
-                print(f"  📦 Loaded {display_name} ({pkl_path.name})")
-            else:
-                print(f"  ⚠️  Không tìm thấy {pkl_path.name}, bỏ qua")
+        # Load best model only
+        best_model_path = MODELS_DIR / "best_model.pkl"
+        if best_model_path.exists():
+            self.models[BEST_MODEL_KEY] = joblib.load(best_model_path)
+            self.available.append({"key": BEST_MODEL_KEY, "name": BEST_MODEL_DISPLAY_NAME})
+            print(f"  📦 Loaded {BEST_MODEL_DISPLAY_NAME} ({best_model_path.name})")
+        else:
+            print(f"  ⚠️  Không tìm thấy best_model.pkl")
 
 
 # Singleton instance — import từ đây ở các file khác

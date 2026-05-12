@@ -53,7 +53,7 @@ Cả hai thành viên sẽ tự code lại thuật toán học máy từ đầu 
 
 ## 3. Giai Đoạn 3: Đánh Giá Tổng Hợp, Tuning & Retrain (Cả Nhóm)
 
-**File Notebook:** `notebooks/06_evaluation_and_tuning.ipynb` (Nhật Hoàng)
+**File Notebook:** `notebooks/06_evaluation_and_tuning.ipynb` (Đức)
 
 **Nhiệm vụ:**
 1. **Tổng hợp:** Gộp tất cả kết quả của 10 mô hình (5 Library + 5 Scratch) thành một bảng DataFrame duy nhất để so sánh toàn diện về hiệu năng (Accuracy, F1-Score) và thời gian chạy.

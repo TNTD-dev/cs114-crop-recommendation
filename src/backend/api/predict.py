@@ -1,11 +1,11 @@
 """
 API Router — POST /api/predict
-Nhận thông số đất + danh sách model, trả về kết quả dự đoán so sánh.
+Nhận thông số đất và trả về kết quả dự đoán từ best model.
 """
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
-from services.model_loader import model_loader
+from services.model_loader import BEST_MODEL_KEY, model_loader
 from services.predictor import predict_with_models
 
 router = APIRouter()
@@ -20,8 +20,8 @@ class PredictRequest(BaseModel):
     ph: float = Field(..., ge=0, le=14, description="Độ pH của đất")
     rainfall: float = Field(..., ge=0, le=500, description="Lượng mưa (mm)")
     models: list[str] = Field(
-        default_factory=lambda: ["naive_bayes", "knn", "logistic_regression", "random_forest", "svm"],
-        description="Danh sách model key cần dự đoán",
+        default_factory=lambda: ["best_model"],
+        description="Giữ để tương thích client cũ; backend luôn dùng best_model",
     )
 
 
@@ -42,20 +42,10 @@ class PredictResponse(BaseModel):
 @router.post("/predict", response_model=PredictResponse, summary="Dự đoán loại cây trồng")
 def predict(req: PredictRequest):
     """
-    Nhận 7 thông số đất/khí hậu + danh sách model muốn dùng.
-    Trả về kết quả dự đoán của từng model và thống kê tổng hợp.
+    Nhận 7 thông số đất/khí hậu và trả về kết quả dự đoán từ best model.
     """
-    # Validate model keys
-    available_keys = {m["key"] for m in model_loader.available}
-    invalid = [k for k in req.models if k not in available_keys]
-    if invalid:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Model(s) không hợp lệ: {invalid}. Có thể dùng: {list(available_keys)}"
-        )
-
-    if not req.models:
-        raise HTTPException(status_code=400, detail="Phải chọn ít nhất 1 model.")
+    if BEST_MODEL_KEY not in model_loader.models:
+        raise HTTPException(status_code=503, detail="best_model chưa được load.")
 
     # Lấy display name
     key_to_name = {m["key"]: m["name"] for m in model_loader.available}
@@ -67,7 +57,7 @@ def predict(req: PredictRequest):
         humidity=req.humidity,
         ph=req.ph,
         rainfall=req.rainfall,
-        selected_model_keys=req.models,
+        selected_model_keys=[BEST_MODEL_KEY],
     )
 
     # Tính consensus (cây được gợi ý nhiều nhất)

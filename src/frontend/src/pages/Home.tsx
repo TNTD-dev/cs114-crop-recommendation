@@ -61,13 +61,7 @@ const clusterColors: Record<string, string> = {
   "Cotton": "#0ea5e9",
 };
 
-const ALL_MODELS = [
-  { key: "naive_bayes", name: "Naive Bayes" },
-  { key: "knn", name: "KNN" },
-  { key: "logistic_regression", name: "Logistic Regression" },
-  { key: "random_forest", name: "Random Forest" },
-  { key: "svm", name: "SVM" },
-];
+const ACTIVE_MODEL = { key: "best_model", name: "Best Model" };
 
 const CROP_EMOJI: Record<string, string> = {
   rice: "🌾", maize: "🌽", chickpea: "🫘", kidneybeans: "🫘",
@@ -92,6 +86,16 @@ type PredictResponse = {
   best_model: string | null;
 };
 
+type FormValues = {
+  nitrogen: number;
+  phosphorus: number;
+  potassium: number;
+  temperature: number;
+  humidity: number;
+  ph: number;
+  rainfall: number;
+};
+
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000").replace(/\/$/, "");
 
 const TEAM_MEMBERS = [
@@ -103,6 +107,40 @@ const TEAM_MEMBERS = [
   { name: "Đào Vũ Hưng", role: "23520554", initials: "DH" },
   { name: "Võ Thành Hưng", role: "23520584", initials: "TH" },
 ];
+
+function levelLabel(value: number, low: number, high: number) {
+  if (value < low) return "low";
+  if (value > high) return "high";
+  return "balanced";
+}
+
+function phLabel(value: number) {
+  if (value < 5.8) return "acidic";
+  if (value > 7.5) return "alkaline";
+  return "near-neutral";
+}
+
+function buildRecommendationReasons(
+  values: FormValues,
+  result: ModelResult,
+  confidence: number,
+  alternatives: [string, number][],
+) {
+  const climate = `${values.temperature}°C temperature, ${values.humidity}% humidity, and ${values.rainfall} mm rainfall`;
+  const nutrientProfile = `N ${values.nitrogen} (${levelLabel(values.nitrogen, 45, 95)}), P ${values.phosphorus} (${levelLabel(values.phosphorus, 30, 75)}), K ${values.potassium} (${levelLabel(values.potassium, 25, 85)})`;
+  const nextOptions = alternatives
+    .slice(0, 2)
+    .map(([crop, prob]) => `${crop} ${Math.round(prob * 100)}%`)
+    .join(" and ");
+
+  return [
+    `Best Model matched ${result.crop} with the current climate profile: ${climate}.`,
+    `Soil chemistry also fits this recommendation: ${nutrientProfile}, with ${values.ph.toFixed(1)} pH (${phLabel(values.ph)}).`,
+    nextOptions
+      ? `The model still preferred ${result.crop} at ${confidence}% confidence over the closest alternatives: ${nextOptions}.`
+      : `The model assigned ${confidence}% confidence to ${result.crop} from the submitted inputs.`,
+  ];
+}
 
 
 
@@ -256,26 +294,15 @@ function AnimatedHeroCard() {
 }
 
 export default function Home() {
-  const [selectedModels, setSelectedModels] = useState<string[]>(ALL_MODELS.map(m => m.key));
   const [formValues, setFormValues] = useState({
-    nitrogen: 90, phosphorus: 55, potassium: 40,
-    temperature: 25, humidity: 82, ph: 6.5, rainfall: 200,
+    nitrogen: 80, phosphorus: 43, potassium: 16,
+    temperature: 24, humidity: 72, ph: 6.7, rainfall: 67,
   });
   const [predictResult, setPredictResult] = useState<PredictResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
 
-  useEffect(() => {}, []);
-
-  const toggleModel = (key: string) => {
-    setSelectedModels(prev =>
-      prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]
-    );
-    setPredictResult(null);
-  };
-
   const handlePredict = async () => {
-    if (selectedModels.length === 0) return;
     setIsLoading(true);
     setApiError(null);
     try {
@@ -286,7 +313,7 @@ export default function Home() {
           N: formValues.nitrogen, P: formValues.phosphorus, K: formValues.potassium,
           temperature: formValues.temperature, humidity: formValues.humidity,
           ph: formValues.ph, rainfall: formValues.rainfall,
-          models: selectedModels,
+          models: [ACTIVE_MODEL.key],
         }),
       });
       if (!res.ok) throw new Error("API error");
@@ -303,6 +330,17 @@ export default function Home() {
     setFormValues(prev => ({ ...prev, [key]: value }));
     setPredictResult(null);
   };
+
+  const primaryResult = predictResult?.results[0] ?? null;
+  const primaryConfidence = primaryResult ? Math.round(primaryResult.confidence * 100) : 0;
+  const primaryAlternatives = primaryResult
+    ? Object.entries(primaryResult.probabilities)
+        .filter(([crop]) => crop !== primaryResult.crop)
+        .slice(0, 3)
+    : [];
+  const recommendationReasons = primaryResult
+    ? buildRecommendationReasons(formValues, primaryResult, primaryConfidence, primaryAlternatives)
+    : [];
 
   return (
     <div className="min-h-screen bg-[#F9F9F4] font-sans">
@@ -553,7 +591,7 @@ export default function Home() {
             </div>
             <h2 className="font-serif text-4xl font-bold text-emerald-950 mb-4">Crop Prediction Engine</h2>
             <p className="text-stone-500 max-w-xl mx-auto text-lg">
-              Enter your soil parameters, select <strong>multiple models</strong> and compare predictions side by side.
+              Enter your soil parameters and let the best model recommend the most suitable crop.
             </p>
           </div>
 
@@ -562,27 +600,22 @@ export default function Home() {
             <div className="lg:col-span-2 bg-white rounded-3xl p-8 shadow-sm border border-stone-100 flex flex-col">
               <h3 className="font-serif text-lg font-bold text-emerald-950 mb-6">Input Parameters</h3>
 
-              {/* Multi-Model Selector */}
+              {/* Active Model */}
               <div className="mb-8">
-                <div className="flex items-center justify-between mb-3">
-                  <label className="text-sm font-semibold text-stone-700">Select Models to Compare</label>
-                  <span className="text-xs text-green-600 font-medium">{selectedModels.length}/{ALL_MODELS.length} selected</span>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {ALL_MODELS.map((m) => {
-                    const checked = selectedModels.includes(m.key);
-                    return (
-                      <button key={m.key} onClick={() => toggleModel(m.key)}
-                        className={`flex items-center gap-1.5 px-3.5 py-2 rounded-full border text-xs font-bold transition-all shadow-sm ${
-                          checked 
-                            ? "bg-green-600 border-green-600 text-white hover:bg-green-700 hover:border-green-700" 
-                            : "bg-white border-stone-200 text-stone-600 hover:border-green-400 hover:bg-green-50 hover:text-green-700"
-                        }`}>
-                        {checked && <CheckCircle2 className="w-3.5 h-3.5" strokeWidth={2.5} />}
-                        {m.name}
-                      </button>
-                    );
-                  })}
+                <label className="text-sm font-semibold text-stone-700 block mb-3">Prediction Model</label>
+                <div className="rounded-2xl border border-green-200 bg-green-50/70 p-4 shadow-sm">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-green-600 text-white flex items-center justify-center shadow-sm">
+                      <CheckCircle2 className="w-5 h-5" strokeWidth={2.4} />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <p className="font-serif font-bold text-emerald-950 leading-tight">{ACTIVE_MODEL.name}</p>
+                        <span className="text-[10px] font-bold text-green-700 bg-white border border-green-200 rounded px-1.5 py-0.5 uppercase tracking-wider">Active</span>
+                      </div>
+                      <p className="text-xs text-stone-500 mt-1">Single production model used for every prediction.</p>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -671,12 +704,12 @@ export default function Home() {
                 </div>
               </div>
 
-              <button onClick={handlePredict} disabled={isLoading || selectedModels.length === 0}
+              <button onClick={handlePredict} disabled={isLoading}
                 className="w-full mt-auto bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white font-bold py-4 rounded-2xl transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 text-base">
                 {isLoading ? (
                   <><div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />Analyzing...</>
                 ) : (
-                  <><Sprout className="w-5 h-5" />Compare {selectedModels.length} Model{selectedModels.length > 1 ? "s" : ""}</>
+                  <><Sprout className="w-5 h-5" />Predict with Best Model</>
                 )}
               </button>
             </div>
@@ -702,7 +735,7 @@ export default function Home() {
 
                   <h3 className="font-serif text-2xl font-bold text-emerald-950 mb-3 relative z-10">Awaiting Data</h3>
                   <p className="text-stone-500 max-w-sm mb-10 relative z-10 text-sm">
-                    Input your soil metrics and climate data to let our multi-model AI engine determine the most suitable crop for your land.
+                    Input your soil metrics and climate data to let our best model determine the most suitable crop for your land.
                   </p>
 
                   <div className="grid grid-cols-3 gap-4 w-full max-w-md relative z-10">
@@ -712,11 +745,11 @@ export default function Home() {
                     </div>
                     <div className="bg-stone-50 rounded-2xl p-4 flex flex-col items-center gap-2 border border-stone-100">
                       <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center text-amber-600 font-bold font-serif text-sm">2</div>
-                      <span className="text-[10px] font-semibold text-stone-500 uppercase tracking-wider text-center">Choose<br/>Models</span>
+                      <span className="text-[10px] font-semibold text-stone-500 uppercase tracking-wider text-center">Use<br/>Model</span>
                     </div>
                     <div className="bg-stone-50 rounded-2xl p-4 flex flex-col items-center gap-2 border border-stone-100">
                       <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-600 font-bold font-serif text-sm">3</div>
-                      <span className="text-[10px] font-semibold text-stone-500 uppercase tracking-wider text-center">Compare<br/>Results</span>
+                      <span className="text-[10px] font-semibold text-stone-500 uppercase tracking-wider text-center">View<br/>Result</span>
                     </div>
                   </div>
                 </div>
@@ -737,9 +770,9 @@ export default function Home() {
                       </div>
                       <p className="text-4xl font-bold font-serif capitalize text-white drop-shadow-sm mb-2">{predictResult.consensus}</p>
                       <div className="inline-flex items-center gap-1.5 bg-black/20 rounded-full px-3 py-1 border border-white/10">
-                        <Users className="w-3.5 h-3.5 text-green-200" />
+                        <CheckCircle2 className="w-3.5 h-3.5 text-green-200" />
                         <p className="text-xs font-medium text-green-100">
-                          Agreed by <strong className="text-white">{predictResult.results.filter(r => r.crop === predictResult.consensus).length} out of {predictResult.results.length}</strong> models
+                          {primaryConfidence}% confidence from <strong className="text-white">Best Model</strong>
                         </p>
                       </div>
                     </div>
@@ -747,58 +780,70 @@ export default function Home() {
                 </div>
               )}
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {predictResult?.results.map((r) => {
-                  const isBest = r.model_key === predictResult.best_model;
-                  const confPct = Math.round(r.confidence * 100);
-                  const alternatives = Object.entries(r.probabilities)
-                    .filter(([c]) => c !== r.crop)
-                    .slice(0, 2);
-
-                  return (
-                    <div key={r.model_key} className={`bg-white rounded-2xl p-5 border shadow-sm flex flex-col justify-between transition-all ${isBest ? "border-green-400 shadow-green-100 ring-1 ring-green-400" : "border-stone-100"}`}>
-                      <div>
-                        <div className="flex items-start justify-between mb-4">
-                          <div className="flex items-center gap-3">
-                            <div className="text-2xl bg-stone-50 w-10 h-10 rounded-xl flex items-center justify-center border border-stone-100 shadow-sm">{CROP_EMOJI[r.crop] ?? "🌱"}</div>
-                            <div>
-                              <div className="font-serif font-bold text-emerald-950 capitalize leading-tight mb-0.5">{r.crop}</div>
-                              <div className="text-xs text-stone-500 font-medium flex items-center gap-1.5">
-                                {r.model_name}
-                                {isBest && <span className="text-[9px] font-bold text-green-700 bg-green-100 rounded text-center px-1.5 py-0.5 uppercase tracking-wider">Best</span>}
-                              </div>
-                            </div>
-                          </div>
-                          <div className="text-right flex flex-col items-end">
-                            <div className="text-lg font-bold font-serif text-green-700 leading-tight">{confPct}%</div>
-                          </div>
-                        </div>
-
-                        <div className="w-full bg-stone-100 rounded-full h-1.5 mb-4 overflow-hidden">
-                          <div className="h-1.5 rounded-full bg-gradient-to-r from-green-400 to-green-600" style={{ width: `${confPct}%`, transition: "width 0.8s ease" }} />
-                        </div>
+              {primaryResult && (
+                <div className="bg-white rounded-3xl p-6 border border-green-300 shadow-sm ring-1 ring-green-200">
+                  <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-5 mb-5">
+                    <div className="flex items-start gap-4">
+                      <div className="text-3xl bg-green-50 w-14 h-14 rounded-2xl flex items-center justify-center border border-green-100 shadow-sm">
+                        {CROP_EMOJI[primaryResult.crop] ?? "🌱"}
                       </div>
-
-                      {alternatives.length > 0 && (
-                        <div className="bg-stone-50 rounded-xl p-3 space-y-2 border border-stone-100/50">
-                          <p className="text-[10px] uppercase tracking-wider text-stone-400 font-bold">Alternatives</p>
-                          {alternatives.map(([crop, prob]) => (
-                            <div key={crop} className="flex items-center justify-between text-[11px]">
-                              <span className="text-stone-600 capitalize font-medium">{crop}</span>
-                              <div className="flex items-center gap-2 w-1/2">
-                                <div className="flex-1 bg-stone-200 rounded-full h-1 overflow-hidden">
-                                  <div className="h-1 rounded-full bg-stone-400" style={{ width: `${Math.round(prob * 100)}%` }} />
-                                </div>
-                                <span className="text-stone-400 w-6 text-right font-mono">{Math.round(prob * 100)}%</span>
-                              </div>
-                            </div>
-                          ))}
+                      <div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <p className="text-xs font-bold text-green-700 bg-green-100 rounded px-2 py-0.5 uppercase tracking-wider">Recommended Crop</p>
+                          <span className="text-xs text-stone-400">{primaryResult.model_name}</span>
                         </div>
-                      )}
+                        <h3 className="font-serif text-3xl font-bold text-emerald-950 capitalize leading-tight">{primaryResult.crop}</h3>
+                      </div>
                     </div>
-                  );
-                })}
-              </div>
+                    <div className="md:text-right">
+                      <p className="text-xs font-bold text-stone-400 uppercase tracking-wider mb-1">Confidence</p>
+                      <p className="font-serif text-4xl font-bold text-green-700 leading-none">{primaryConfidence}%</p>
+                    </div>
+                  </div>
+
+                  <div className="w-full bg-stone-100 rounded-full h-2 mb-5 overflow-hidden">
+                    <div className="h-2 rounded-full bg-gradient-to-r from-green-400 to-green-600" style={{ width: `${primaryConfidence}%`, transition: "width 0.8s ease" }} />
+                  </div>
+
+                  <div className="bg-emerald-50/70 rounded-2xl p-4 border border-emerald-100 mb-5">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Beaker className="w-4 h-4 text-green-700" />
+                      <p className="text-[11px] uppercase tracking-wider text-green-800 font-bold">Why this recommendation</p>
+                    </div>
+                    <div className="space-y-2">
+                      {recommendationReasons.map((reason) => (
+                        <div key={reason} className="flex gap-2 text-xs leading-relaxed text-stone-700">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-green-600 mt-0.5 shrink-0" />
+                          <p>{reason}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {primaryAlternatives.length > 0 && (
+                    <div className="bg-stone-50 rounded-2xl p-4 border border-stone-100">
+                      <div className="flex items-center justify-between mb-3">
+                        <p className="text-[11px] uppercase tracking-wider text-stone-500 font-bold">Next Best Options</p>
+                        <span className="text-[11px] text-stone-400">Top probabilities</span>
+                      </div>
+                      <div className="space-y-3">
+                        {primaryAlternatives.map(([crop, prob]) => {
+                          const pct = Math.round(prob * 100);
+                          return (
+                            <div key={crop} className="grid grid-cols-[5rem_1fr_2.5rem] items-center gap-3 text-xs">
+                              <span className="text-stone-700 capitalize font-semibold">{crop}</span>
+                              <div className="bg-stone-200 rounded-full h-1.5 overflow-hidden">
+                                <div className="h-1.5 rounded-full bg-stone-400" style={{ width: `${pct}%` }} />
+                              </div>
+                              <span className="text-stone-500 text-right font-mono">{pct}%</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>
